@@ -7,6 +7,8 @@ const authRoutes = require('./routes/authRoutes');
 const authMiddleware = require('./middlewares/authMiddleware');
 const { isProjectMember, isProjectAdmin } = require('./middlewares/projectAuth.js');
 const projectRoute = require('./routes/projectRoutes');
+const taskRoute = require('./routes/taskRoutes');
+const {updateTask} = require('./controllers/taskController.js');
 
 
 initDatabase();
@@ -23,6 +25,7 @@ app.use(cookieParser());
 app.use('/', homeRoute);
 app.use('/api/auth', authRoutes);
 app.use('/api/projects',projectRoute)
+app.use('/api/projects/:id/tasks', taskRoute);
 
 
 app.get('/api/auth/me', authMiddleware, (req, res) => res.json(req.user));
@@ -34,6 +37,8 @@ app.get('/api/projects/:id/test-member', authMiddleware, isProjectMember, (req, 
 app.get('/api/projects/:id/test-admin', authMiddleware, isProjectAdmin, (req, res) => {
      res.json({ message: 'You are an admin, access granted' });
 });
+
+app.put('/api/tasks/:taskId', authMiddleware, updateTask);
 
 
 app.listen(PORT,(err)=>{
