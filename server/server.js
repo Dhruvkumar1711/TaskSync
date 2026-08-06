@@ -5,6 +5,7 @@ const { initDatabases, initDatabase } = require('./controllers/initDb.js');
 const { homeRoute } = require('./routes/defaultRoutes');
 const authRoutes = require('./routes/authRoutes');
 const authMiddleware = require('./middlewares/authMiddleware');
+const { isProjectMember, isProjectAdmin } = require('./middlewares/projectAuth.js');
 
 initDatabase();
 
@@ -22,6 +23,14 @@ app.use('/api/auth', authRoutes);
 
 
 app.get('/api/auth/me', authMiddleware, (req, res) => res.json(req.user));
+
+app.get('/api/projects/:id/test-member', authMiddleware, isProjectMember, (req, res) => {
+     res.json({ message: 'You are a member, access granted' });
+});
+
+app.get('/api/projects/:id/test-admin', authMiddleware, isProjectAdmin, (req, res) => {
+     res.json({ message: 'You are an admin, access granted' });
+});
 
 
 app.listen(PORT,(err)=>{
