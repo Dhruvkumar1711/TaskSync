@@ -1,34 +1,34 @@
 const express = require('express');
 require('dotenv').config();
 const cookieParser = require('cookie-parser');
+const { initDatabases, initDatabase } = require('./controllers/initDb.js');
+const { homeRoute } = require('./routes/defaultRoutes');
+const authRoutes = require('./routes/authRoutes');
+const authMiddleware = require('./middlewares/authMiddleware');
 
-const PORT = process.env.PORT || 3000;
+initDatabase();
+
+const PORT = process.env.PORT || 8000;
 
 const app = express();
 
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
 
 
-app.get('/', (req, res) => {
-    try{
-        res.status(200).json({
-            status: 'success',
-             message: 'Server is running'
-            });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            status: 'failed',
-             message: 'Internal Server Error' ,
-             error: error.message
-            }); 
-    }
-});
+app.use('/', homeRoute);
+app.use('/api/auth', authRoutes);
 
-app.listen(process.env.PORT,(err)=>{
+
+app.get('/api/auth/me', authMiddleware, (req, res) => res.json(req.user));
+
+
+app.listen(PORT,(err)=>{
    if (err) {
         console.log(err)
     }
     
-    console.log(`Successfully Connected to Server at Port: ${process.env.PORT}`)
+    console.log(`Successfully Connected to Server at Port: ${PORT}`)
     
 })
