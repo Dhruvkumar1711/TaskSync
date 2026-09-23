@@ -3,11 +3,11 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import ProjectBoard from './pages/ProjectBoard';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { PublicOnlyRoute } from './components/PublicOnlyRoute';
 
-// Shared layout for auth pages with centered card and ambient gradient glow
 const AuthLayout = ({ children }) => (
   <div className="min-h-screen w-full bg-background text-foreground flex items-center justify-center p-4 relative overflow-hidden">
     <div 
@@ -28,7 +28,6 @@ const App = () => {
   return (
     <AuthProvider>
       <Routes>
-        
         <Route
           path="/login"
           element={
@@ -60,7 +59,17 @@ const App = () => {
           }
         />
 
-        {/* Root Redirect */}
+        
+        <Route
+          path="/projects/:id"
+          element={
+            <ProtectedRoute>
+              <ProjectBoard />
+            </ProtectedRoute>
+          }
+        />
+
+        
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
