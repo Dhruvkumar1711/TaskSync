@@ -13,11 +13,13 @@ import {
   X,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { api } from '../api/apiClient';
 import Navbar from '../components/Navbar';
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const toast = useToast();
   const navigate = useNavigate();
 
   const [projects, setProjects] = useState([]);
@@ -83,6 +85,7 @@ const Dashboard = () => {
       setNewProjectName('');
       setNewProjectDesc('');
       setIsCreateOpen(false);
+      toast.success('Project created successfully');
     } catch (err) {
       setCreateError(err.message || 'Failed to create project. Please try again.');
     } finally {
@@ -105,6 +108,7 @@ const Dashboard = () => {
       await api.post(`/api/projects/${inviteModalProject.id}/invite`, {
         email: inviteEmail.trim(),
       });
+      toast.success(`Successfully invited ${inviteEmail.trim()}`);
       setInviteSuccess(`Successfully invited ${inviteEmail.trim()}!`);
       setInviteEmail('');
       setTimeout(() => {

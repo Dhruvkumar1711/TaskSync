@@ -5,9 +5,9 @@ import Dashboard from './pages/Dashboard';
 import ProjectBoard from './pages/ProjectBoard';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { ToastProvider } from './context/ToastContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { PublicOnlyRoute } from './components/PublicOnlyRoute';
-
 
 const AuthLayout = ({ children }) => (
   <div className="min-h-screen w-full bg-background text-foreground flex items-center justify-center p-4 relative overflow-hidden">
@@ -29,7 +29,8 @@ const App = () => {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <Routes>
+        <ToastProvider>
+          <Routes>
           <Route
             path="/login"
             element={
@@ -69,6 +70,7 @@ const App = () => {
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
+        </ToastProvider>
       </AuthProvider>
     </ThemeProvider>
   );
