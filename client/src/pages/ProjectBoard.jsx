@@ -18,6 +18,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api/apiClient';
 import Navbar from '../components/Navbar';
+import TaskDetailModal from '../components/TaskDetailModal';
 
 const COLUMNS = [
   {
@@ -68,6 +69,7 @@ const ProjectBoard = () => {
   const [inviteSuccess, setInviteSuccess] = useState('');
 
   const [draggedOverCol, setDraggedOverCol] = useState(null);
+  const [selectedTask, setSelectedTask] = useState(null);
 
   const fetchData = async () => {
     try {
@@ -141,6 +143,9 @@ const ProjectBoard = () => {
     setTasks((current) =>
       current.map((t) => (t.id === taskId ? { ...t, status: nextStatus } : t))
     );
+    setSelectedTask((prev) =>
+      prev && prev.id === taskId ? { ...prev, status: nextStatus } : prev
+    );
 
     try {
       await api.put(`/api/tasks/${taskId}`, {
@@ -149,7 +154,11 @@ const ProjectBoard = () => {
     } catch (err) {
       // Revert if API fails
       setTasks(prevTasks);
+      setSelectedTask((prev) =>
+        prev && prev.id === taskId ? prevTasks.find((t) => t.id === taskId) || prev : prev
+      );
       setError(err.message || 'Failed to update task status.');
+      throw err;
     }
   };
 
@@ -403,7 +412,8 @@ const ProjectBoard = () => {
                           key={task.id}
                           draggable
                           onDragStart={(e) => handleDragStart(e, task.id)}
-                          className="group bg-card border border-border hover:border-primary/50 rounded-xl p-4 shadow-2xs hover:shadow-sm transition-all duration-150 cursor-grab active:cursor-grabbing relative overflow-hidden"
+                          onClick={() => setSelectedTask(task)}
+                          className="group bg-card border border-border hover:border-primary/50 hover:shadow-md rounded-xl p-4 shadow-2xs transition-all duration-150 cursor-pointer active:cursor-grabbing relative overflow-hidden"
                         >
                           <div 
                             className={`absolute top-0 left-0 bottom-0 w-1 ${column.dotColor}`} 
@@ -433,7 +443,10 @@ const ProjectBoard = () => {
                               <div className="flex items-center gap-1">
                                 {column.id !== 'todo' && (
                                   <button
-                                    onClick={() => handleUpdateStatus(task.id, 'todo')}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleUpdateStatus(task.id, 'todo');
+                                    }}
                                     className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-input/40 hover:bg-input text-muted-foreground hover:text-foreground transition cursor-pointer"
                                     title="Move to To Do"
                                   >
@@ -442,7 +455,10 @@ const ProjectBoard = () => {
                                 )}
                                 {column.id !== 'in_progress' && (
                                   <button
-                                    onClick={() => handleUpdateStatus(task.id, 'in_progress')}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleUpdateStatus(task.id, 'in_progress');
+                                    }}
                                     className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-input/40 hover:bg-input text-chart-4 transition cursor-pointer"
                                     title="Move to In Progress"
                                   >
@@ -451,7 +467,10 @@ const ProjectBoard = () => {
                                 )}
                                 {column.id !== 'done' && (
                                   <button
-                                    onClick={() => handleUpdateStatus(task.id, 'done')}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleUpdateStatus(task.id, 'done');
+                                    }}
                                     className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-chart-3/15 hover:bg-chart-3/25 text-chart-3 transition cursor-pointer"
                                     title="Mark as Done"
                                   >
@@ -640,6 +659,15 @@ const ProjectBoard = () => {
             </form>
           </div>
         </div>
+      )}
+
+      
+      {selectedTask && (
+        <TaskDetailModal
+          task={selectedTask}
+          onClose={() => setSelectedTask(null)}
+          onStatusChange={handleUpdateStatus}
+        />
       )}
     </div>
   );
