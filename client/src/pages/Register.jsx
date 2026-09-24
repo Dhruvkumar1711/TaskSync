@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Layers, User, Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -41,14 +41,12 @@ const Register = () => {
       await register(username.trim(), email.trim(), password);
       setSuccess('Account created successfully! Logging you in...');
       
-      // Auto login user after successful registration
       try {
         await login(email.trim(), password);
         setTimeout(() => {
           navigate('/dashboard');
         }, 1000);
       } catch {
-        // If auto-login fails, redirect to login page
         setTimeout(() => {
           navigate('/login');
         }, 1500);
@@ -62,7 +60,6 @@ const Register = () => {
 
   return (
     <div className="w-full max-w-md">
-      {/* Decorative Brand Header */}
       <div className="text-center mb-8">
         <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-primary to-accent text-primary-foreground shadow-lg mb-4 ring-4 ring-primary/20">
           <Layers className="w-7 h-7" />
@@ -75,9 +72,7 @@ const Register = () => {
         </p>
       </div>
 
-      {/* Main Register Card */}
       <div className="bg-card border border-border rounded-2xl shadow-xl p-8 backdrop-blur-sm relative overflow-hidden">
-        {/* Subtle top gradient accent line */}
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-accent to-secondary" />
 
         <div className="mb-6">

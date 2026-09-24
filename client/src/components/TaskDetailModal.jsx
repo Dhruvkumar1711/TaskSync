@@ -1,13 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { 
-  X, 
-  Calendar, 
-  Clock, 
-  CheckCircle2, 
-  Circle, 
-  Loader2, 
+import { useEffect, useState } from 'react';
+import {
+  X,
+  Calendar,
+  Clock,
+  CheckCircle2,
+  Circle,
+  Loader2,
   AlertCircle,
-  Tag
+  Tag,
 } from 'lucide-react';
 
 const STATUS_CONFIG = {
@@ -37,7 +37,7 @@ const STATUS_CONFIG = {
   },
 };
 
-export const TaskDetailModal = ({ task, onClose, onStatusChange }) => {
+const TaskDetailModal = ({ task, onClose, onStatusChange }) => {
   const [currentStatus, setCurrentStatus] = useState(task?.status || 'todo');
   const [updating, setUpdating] = useState(false);
   const [updateError, setUpdateError] = useState('');
@@ -48,7 +48,6 @@ export const TaskDetailModal = ({ task, onClose, onStatusChange }) => {
     }
   }, [task]);
 
-  
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
@@ -66,6 +65,7 @@ export const TaskDetailModal = ({ task, onClose, onStatusChange }) => {
 
     setUpdating(true);
     setUpdateError('');
+
     try {
       await onStatusChange(task.id, nextStatus);
       setCurrentStatus(nextStatus);
@@ -103,25 +103,24 @@ export const TaskDetailModal = ({ task, onClose, onStatusChange }) => {
   const ActiveIcon = activeConfig.icon;
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/20 backdrop-blur-xs animate-fadeIn"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-labelledby="task-detail-title"
     >
-      <div 
+      <div
         className="bg-card border border-border rounded-2xl shadow-2xl max-w-xl w-full p-6 sm:p-7 relative overflow-hidden flex flex-col max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-accent to-secondary" />
 
-        
         <div className="flex items-start justify-between gap-3 pb-4 border-b border-border/80">
           <div className="flex flex-col gap-1.5 flex-1 pr-2">
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-input/60 border border-border text-muted-foreground">
-                <Tag className="w-3 h-3 text-muted-foreground" />
+                <Tag className="w-3 h-3" />
                 TASK-{task.id}
               </span>
               <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${activeConfig.badgeClass}`}>
@@ -130,7 +129,7 @@ export const TaskDetailModal = ({ task, onClose, onStatusChange }) => {
               </span>
             </div>
 
-            <h2 
+            <h2
               id="task-detail-title"
               className="text-xl sm:text-2xl font-bold text-foreground tracking-tight break-words mt-1"
             >
@@ -147,7 +146,6 @@ export const TaskDetailModal = ({ task, onClose, onStatusChange }) => {
           </button>
         </div>
 
-        
         <div className="flex-1 overflow-y-auto py-5 space-y-6 pr-1">
           {updateError && (
             <div className="p-3.5 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm flex items-center gap-2">
@@ -156,7 +154,6 @@ export const TaskDetailModal = ({ task, onClose, onStatusChange }) => {
             </div>
           )}
 
-          
           <div>
             <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
               Description
@@ -172,7 +169,6 @@ export const TaskDetailModal = ({ task, onClose, onStatusChange }) => {
             )}
           </div>
 
-          {/* Status Quick Switcher */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
@@ -209,7 +205,6 @@ export const TaskDetailModal = ({ task, onClose, onStatusChange }) => {
             </div>
           </div>
 
-          
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2">
             <div className="p-3.5 rounded-xl bg-card border border-border/70 flex items-center gap-3">
               <div className="w-9 h-9 rounded-lg bg-input/40 flex items-center justify-center text-muted-foreground shrink-0">
@@ -241,11 +236,12 @@ export const TaskDetailModal = ({ task, onClose, onStatusChange }) => {
           </div>
         </div>
 
-        
         <div className="pt-4 border-t border-border flex items-center justify-between">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <ActiveIcon className="w-3.5 h-3.5 text-foreground" />
-            <span>Currently: <strong>{activeConfig.label}</strong></span>
+            <span>
+              Currently: <strong>{activeConfig.label}</strong>
+            </span>
           </div>
 
           <button

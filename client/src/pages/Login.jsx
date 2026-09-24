@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Layers, Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle, Loader2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -47,9 +47,7 @@ const Login = () => {
         </p>
       </div>
 
-      {/* Main Login Card */}
       <div className="bg-card border border-border rounded-2xl shadow-xl p-8 backdrop-blur-sm relative overflow-hidden">
-        {/* Subtle top gradient accent line */}
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-accent to-secondary" />
 
         <div className="mb-6">

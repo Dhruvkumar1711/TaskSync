@@ -1,10 +1,11 @@
-import React from 'react';
-import { Layers, LogOut, User } from 'lucide-react';
+import { Layers, LogOut, Sun, Moon } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
-export const Navbar = () => {
+const Navbar = () => {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -24,34 +25,42 @@ export const Navbar = () => {
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-primary to-accent text-primary-foreground flex items-center justify-center shadow-md group-hover:scale-105 transition-transform duration-200">
             <Layers className="w-5 h-5" />
           </div>
-          <div className="flex flex-col">
-            <span className="text-xl font-bold tracking-tight text-foreground">
-              Task<span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Sync</span>
-            </span>
-          </div>
+          <span className="text-xl font-bold tracking-tight text-foreground">
+            Task<span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Sync</span>
+          </span>
         </Link>
 
-        {user && (
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-input/40 border border-border">
-              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-accent text-primary-foreground text-xs font-bold flex items-center justify-center shadow-xs">
-                {getInitials(user.username)}
-              </div>
-              <span className="text-sm font-medium text-foreground hidden sm:inline">
-                {user.username}
-              </span>
-            </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-input/60 border border-transparent hover:border-border transition-all cursor-pointer"
+            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
 
-            <button
-              onClick={handleLogout}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 border border-transparent hover:border-destructive/20 transition-all cursor-pointer"
-              title="Sign out"
-            >
-              <LogOut className="w-4 h-4" />
-              <span className="hidden sm:inline">Sign Out</span>
-            </button>
-          </div>
-        )}
+          {user && (
+            <>
+              <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-input/40 border border-border">
+                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-accent text-primary-foreground text-xs font-bold flex items-center justify-center shadow-xs">
+                  {getInitials(user.username)}
+                </div>
+                <span className="text-sm font-medium text-foreground hidden sm:inline">
+                  {user.username}
+                </span>
+              </div>
+
+              <button
+                onClick={handleLogout}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 border border-transparent hover:border-destructive/20 transition-all cursor-pointer"
+                title="Sign out"
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="hidden sm:inline">Sign Out</span>
+              </button>
+            </>
+          )}
+        </div>
       </div>
     </header>
   );

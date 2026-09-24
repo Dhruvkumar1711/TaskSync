@@ -1,21 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  Plus, 
-  Calendar, 
-  Search, 
-  X, 
-  Loader2, 
-  AlertCircle, 
-  CheckCircle2, 
-  Clock, 
-  Circle, 
-  UserPlus, 
-  ArrowRight,
-  MoreHorizontal
+import { useState, useEffect, useCallback } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import {
+  ArrowLeft,
+  Plus,
+  Calendar,
+  Search,
+  X,
+  Loader2,
+  AlertCircle,
+  CheckCircle2,
+  Clock,
+  Circle,
+  UserPlus,
 } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
 import { api } from '../api/apiClient';
 import Navbar from '../components/Navbar';
 import TaskDetailModal from '../components/TaskDetailModal';
@@ -25,29 +22,24 @@ const COLUMNS = [
     id: 'todo',
     title: 'To Do',
     icon: Circle,
-    badgeBg: 'bg-muted/70 text-foreground border-border',
     dotColor: 'bg-muted-foreground',
   },
   {
     id: 'in_progress',
     title: 'In Progress',
     icon: Clock,
-    badgeBg: 'bg-chart-4/15 text-chart-4 border-chart-4/30',
     dotColor: 'bg-chart-4',
   },
   {
     id: 'done',
     title: 'Done',
     icon: CheckCircle2,
-    badgeBg: 'bg-chart-3/15 text-chart-3 border-chart-3/30',
     dotColor: 'bg-chart-3',
   },
 ];
 
 const ProjectBoard = () => {
   const { id: projectId } = useParams();
-  const { user } = useAuth();
-  const navigate = useNavigate();
 
   const [project, setProject] = useState(null);
   const [tasks, setTasks] = useState([]);
@@ -71,17 +63,17 @@ const ProjectBoard = () => {
   const [draggedOverCol, setDraggedOverCol] = useState(null);
   const [selectedTask, setSelectedTask] = useState(null);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
 
       const projectsRes = await api.get('/api/projects');
       const allProjects = projectsRes?.data || (Array.isArray(projectsRes) ? projectsRes : []);
-      const currentProj = allProjects.find((p) => p.id === parseInt(projectId, 10));
+      const currentProject = allProjects.find((p) => p.id === parseInt(projectId, 10));
 
-      if (currentProj) {
-        setProject(currentProj);
+      if (currentProject) {
+        setProject(currentProject);
       } else {
         setProject({ id: projectId, name: `Project #${projectId}` });
       }
@@ -97,11 +89,11 @@ const ProjectBoard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [projectId]);
 
   useEffect(() => {
     fetchData();
-  }, [projectId]);
+  }, [fetchData]);
 
   const handleCreateTask = async (e) => {
     e.preventDefault();
@@ -132,7 +124,7 @@ const ProjectBoard = () => {
       setTaskDueDate('');
       setIsAddTaskOpen(false);
     } catch (err) {
-      setCreateTaskError(err.message || 'Failed to create task.');
+      setCreateTaskError(err.message || 'Failed to create task. Please try again.');
     } finally {
       setCreateTaskLoading(false);
     }
@@ -140,6 +132,7 @@ const ProjectBoard = () => {
 
   const handleUpdateStatus = async (taskId, nextStatus) => {
     const prevTasks = [...tasks];
+
     setTasks((current) =>
       current.map((t) => (t.id === taskId ? { ...t, status: nextStatus } : t))
     );
@@ -148,11 +141,8 @@ const ProjectBoard = () => {
     );
 
     try {
-      await api.put(`/api/tasks/${taskId}`, {
-        status: nextStatus,
-      });
+      await api.put(`/api/tasks/${taskId}`, { status: nextStatus });
     } catch (err) {
-      // Revert if API fails
       setTasks(prevTasks);
       setSelectedTask((prev) =>
         prev && prev.id === taskId ? prevTasks.find((t) => t.id === taskId) || prev : prev
@@ -162,35 +152,6 @@ const ProjectBoard = () => {
     }
   };
 
-  const handleDragStart = (e, taskId) => {
-    e.dataTransfer.setData('text/plain', taskId.toString());
-  };
-
-  const handleDragOver = (e, colId) => {
-    e.preventDefault();
-    if (draggedOverCol !== colId) {
-      setDraggedOverCol(colId);
-    }
-  };
-
-  const handleDragLeave = () => {
-    setDraggedOverCol(null);
-  };
-
-  const handleDrop = async (e, targetStatus) => {
-    e.preventDefault();
-    setDraggedOverCol(null);
-    const taskIdStr = e.dataTransfer.getData('text/plain');
-    if (!taskIdStr) return;
-
-    const taskId = parseInt(taskIdStr, 10);
-    const task = tasks.find((t) => t.id === taskId);
-    if (task && task.status !== targetStatus) {
-      await handleUpdateStatus(taskId, targetStatus);
-    }
-  };
-
-  // Handle Invite Collaborator
   const handleInviteUser = async (e) => {
     e.preventDefault();
     if (!inviteEmail.trim()) {
@@ -213,10 +174,56 @@ const ProjectBoard = () => {
         setInviteSuccess('');
       }, 1500);
     } catch (err) {
-      setInviteError(err.message || 'User not found or already invited.');
+      setInviteError(err.message || 'User not found or already a member.');
     } finally {
       setInviteLoading(false);
     }
+  };
+
+  const handleDragStart = (e, taskId) => {
+    e.dataTransfer.setData('text/plain', taskId.toString());
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e, colId) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (draggedOverCol !== colId) {
+      setDraggedOverCol(colId);
+    }
+  };
+
+  const handleDragLeave = () => {
+    setDraggedOverCol(null);
+  };
+
+  const handleDrop = async (e, targetStatus) => {
+    e.preventDefault();
+    setDraggedOverCol(null);
+
+    const taskIdStr = e.dataTransfer.getData('text/plain');
+    if (!taskIdStr) return;
+
+    const taskId = parseInt(taskIdStr, 10);
+    const task = tasks.find((t) => t.id === taskId);
+    if (task && task.status !== targetStatus) {
+      await handleUpdateStatus(taskId, targetStatus);
+    }
+  };
+
+  const openAddTaskModal = () => {
+    setTaskTitle('');
+    setTaskDesc('');
+    setTaskDueDate('');
+    setCreateTaskError('');
+    setIsAddTaskOpen(true);
+  };
+
+  const openInviteModal = () => {
+    setInviteEmail('');
+    setInviteError('');
+    setInviteSuccess('');
+    setIsInviteOpen(true);
   };
 
   const filteredTasks = tasks.filter((t) => {
@@ -233,10 +240,7 @@ const ProjectBoard = () => {
   const formatDueDate = (dateStr) => {
     if (!dateStr) return null;
     const date = new Date(dateStr);
-    return date.toLocaleDateString(undefined, {
-      month: 'short',
-      day: 'numeric',
-    });
+    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   };
 
   const totalTasks = tasks.length;
@@ -262,7 +266,7 @@ const ProjectBoard = () => {
 
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-3">
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
                 {project?.name}
               </h1>
               {project?.description && (
@@ -274,11 +278,7 @@ const ProjectBoard = () => {
 
             <div className="flex items-center gap-3 shrink-0">
               <button
-                onClick={() => {
-                  setInviteError('');
-                  setInviteSuccess('');
-                  setIsInviteOpen(true);
-                }}
+                onClick={openInviteModal}
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-input/40 hover:bg-input border border-border text-foreground transition cursor-pointer"
               >
                 <UserPlus className="w-4 h-4" />
@@ -286,10 +286,7 @@ const ProjectBoard = () => {
               </button>
 
               <button
-                onClick={() => {
-                  setCreateTaskError('');
-                  setIsAddTaskOpen(true);
-                }}
+                onClick={openAddTaskModal}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-primary-foreground bg-gradient-to-r from-primary to-accent hover:opacity-95 shadow-md active:scale-[0.99] transition cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
@@ -316,8 +313,8 @@ const ProjectBoard = () => {
               <div className="flex items-center gap-2">
                 <span>Progress:</span>
                 <div className="w-28 h-2 rounded-full bg-input overflow-hidden">
-                  <div 
-                    className="h-full bg-gradient-to-r from-primary to-accent rounded-full transition-all duration-300"
+                  <div
+                    className="h-full bg-gradient-to-r from-primary to-accent rounded-full transition-all duration-500"
                     style={{ width: `${completionRate}%` }}
                   />
                 </div>
@@ -325,7 +322,8 @@ const ProjectBoard = () => {
               </div>
               <span className="text-border">|</span>
               <span>
-                <strong className="text-foreground">{doneTasks}</strong> of <strong className="text-foreground">{totalTasks}</strong> completed
+                <strong className="text-foreground">{doneTasks}</strong> of{' '}
+                <strong className="text-foreground">{totalTasks}</strong> done
               </span>
             </div>
           </div>
@@ -335,10 +333,7 @@ const ProjectBoard = () => {
           <div className="my-4 p-3.5 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm flex items-center gap-2.5">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
-            <button 
-              onClick={fetchData}
-              className="ml-auto underline font-semibold cursor-pointer"
-            >
+            <button onClick={fetchData} className="ml-auto underline font-semibold cursor-pointer">
               Retry
             </button>
           </div>
@@ -346,8 +341,8 @@ const ProjectBoard = () => {
 
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6 flex-1">
-            {[1, 2, 3].map((colIndex) => (
-              <div key={colIndex} className="bg-card/50 border border-border/70 rounded-2xl p-4 flex flex-col gap-3 animate-pulse">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-card/50 border border-border/70 rounded-2xl p-4 flex flex-col gap-3 animate-pulse">
                 <div className="h-6 w-1/3 bg-muted/60 rounded-md" />
                 <div className="h-24 bg-muted/40 rounded-xl" />
                 <div className="h-24 bg-muted/40 rounded-xl" />
@@ -367,27 +362,22 @@ const ProjectBoard = () => {
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDrop(e, column.id)}
                   className={`bg-card/60 backdrop-blur-xs border rounded-2xl p-4 flex flex-col min-h-[500px] transition-all duration-150 ${
-                    isOver 
-                      ? 'border-primary ring-2 ring-primary/20 bg-primary/5' 
+                    isOver
+                      ? 'border-primary ring-2 ring-primary/20 bg-primary/5'
                       : 'border-border'
                   }`}
                 >
                   <div className="flex items-center justify-between pb-3 mb-3 border-b border-border/70">
                     <div className="flex items-center gap-2">
                       <span className={`w-2.5 h-2.5 rounded-full ${column.dotColor}`} />
-                      <h3 className="text-sm font-bold text-foreground">
-                        {column.title}
-                      </h3>
+                      <h3 className="text-sm font-bold text-foreground">{column.title}</h3>
                       <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-input/60 border border-border text-muted-foreground">
                         {colTasks.length}
                       </span>
                     </div>
 
                     <button
-                      onClick={() => {
-                        setCreateTaskError('');
-                        setIsAddTaskOpen(true);
-                      }}
+                      onClick={openAddTaskModal}
                       className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-input transition cursor-pointer"
                       title={`Add task to ${column.title}`}
                     >
@@ -395,92 +385,23 @@ const ProjectBoard = () => {
                     </button>
                   </div>
 
-            
                   <div className="flex-1 space-y-3">
                     {colTasks.length === 0 ? (
                       <div className="h-36 border border-dashed border-border/80 rounded-xl flex flex-col items-center justify-center text-center p-4">
-                        <p className="text-xs text-muted-foreground">
-                          No tasks in {column.title}
-                        </p>
-                        <p className="text-[11px] text-muted-foreground/70 mt-1">
-                          Drag tasks here or click + to add
-                        </p>
+                        <p className="text-xs text-muted-foreground">No tasks in {column.title}</p>
+                        <p className="text-[11px] text-muted-foreground/70 mt-1">Drag tasks here or click + to add</p>
                       </div>
                     ) : (
                       colTasks.map((task) => (
-                        <div
+                        <TaskCard
                           key={task.id}
-                          draggable
-                          onDragStart={(e) => handleDragStart(e, task.id)}
+                          task={task}
+                          column={column}
+                          onDragStart={handleDragStart}
+                          onStatusChange={handleUpdateStatus}
                           onClick={() => setSelectedTask(task)}
-                          className="group bg-card border border-border hover:border-primary/50 hover:shadow-md rounded-xl p-4 shadow-2xs transition-all duration-150 cursor-pointer active:cursor-grabbing relative overflow-hidden"
-                        >
-                          <div 
-                            className={`absolute top-0 left-0 bottom-0 w-1 ${column.dotColor}`} 
-                          />
-
-                          <div className="pl-1">
-                            <h4 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
-                              {task.title}
-                            </h4>
-
-                            {task.description && (
-                              <p className="text-xs text-muted-foreground mt-1.5 line-clamp-3">
-                                {task.description}
-                              </p>
-                            )}
-
-                            <div className="flex items-center justify-between gap-2 mt-3 pt-2.5 border-t border-border/50 text-[11px]">
-                              {task.due_date ? (
-                                <div className="inline-flex items-center gap-1 text-muted-foreground">
-                                  <Calendar className="w-3 h-3 text-muted-foreground" />
-                                  <span>{formatDueDate(task.due_date)}</span>
-                                </div>
-                              ) : (
-                                <span className="text-muted-foreground/60">No due date</span>
-                              )}
-
-                              <div className="flex items-center gap-1">
-                                {column.id !== 'todo' && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleUpdateStatus(task.id, 'todo');
-                                    }}
-                                    className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-input/40 hover:bg-input text-muted-foreground hover:text-foreground transition cursor-pointer"
-                                    title="Move to To Do"
-                                  >
-                                    To Do
-                                  </button>
-                                )}
-                                {column.id !== 'in_progress' && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleUpdateStatus(task.id, 'in_progress');
-                                    }}
-                                    className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-input/40 hover:bg-input text-chart-4 transition cursor-pointer"
-                                    title="Move to In Progress"
-                                  >
-                                    Progress
-                                  </button>
-                                )}
-                                {column.id !== 'done' && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleUpdateStatus(task.id, 'done');
-                                    }}
-                                    className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-chart-3/15 hover:bg-chart-3/25 text-chart-3 transition cursor-pointer"
-                                    title="Mark as Done"
-                                  >
-                                    Done
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+                          formatDueDate={formatDueDate}
+                        />
                       ))
                     )}
                   </div>
@@ -521,9 +442,10 @@ const ProjectBoard = () => {
                 <input
                   type="text"
                   required
+                  autoFocus
                   value={taskTitle}
                   onChange={(e) => setTaskTitle(e.target.value)}
-                  placeholder="e.g. Design authentication workflow"
+                  placeholder="e.g. Design login screen"
                   className="w-full px-3.5 py-2.5 bg-input/40 border border-border rounded-xl text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-ring/40 focus:border-primary text-sm transition"
                 />
               </div>
@@ -536,7 +458,7 @@ const ProjectBoard = () => {
                   rows={3}
                   value={taskDesc}
                   onChange={(e) => setTaskDesc(e.target.value)}
-                  placeholder="Provide context or acceptance criteria..."
+                  placeholder="Add details or acceptance criteria..."
                   className="w-full px-3.5 py-2.5 bg-input/40 border border-border rounded-xl text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-ring/40 focus:border-primary text-sm transition resize-none"
                 />
               </div>
@@ -549,7 +471,7 @@ const ProjectBoard = () => {
                   type="date"
                   value={taskDueDate}
                   onChange={(e) => setTaskDueDate(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-input/40 border border-border rounded-xl text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-ring/40 focus:border-primary text-sm transition"
+                  className="w-full px-3.5 py-2.5 bg-input/40 border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-ring/40 focus:border-primary text-sm transition"
                 />
               </div>
 
@@ -623,13 +545,14 @@ const ProjectBoard = () => {
                 <input
                   type="email"
                   required
+                  autoFocus
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
                   placeholder="colleague@example.com"
                   className="w-full px-3.5 py-2.5 bg-input/40 border border-border rounded-xl text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-ring/40 focus:border-primary text-sm transition"
                 />
                 <p className="text-xs text-muted-foreground mt-1.5">
-                  The user must already have registered an account on TaskSync.
+                  The user must already have a TaskSync account.
                 </p>
               </div>
 
@@ -639,7 +562,7 @@ const ProjectBoard = () => {
                   onClick={() => setIsInviteOpen(false)}
                   className="px-4 py-2 rounded-xl text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition cursor-pointer"
                 >
-                  Close
+                  Cancel
                 </button>
                 <button
                   type="submit"
@@ -649,7 +572,7 @@ const ProjectBoard = () => {
                   {inviteLoading ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Sending Invite...</span>
+                      <span>Sending...</span>
                     </>
                   ) : (
                     <span>Send Invite</span>
@@ -661,7 +584,6 @@ const ProjectBoard = () => {
         </div>
       )}
 
-      
       {selectedTask && (
         <TaskDetailModal
           task={selectedTask}
@@ -669,6 +591,81 @@ const ProjectBoard = () => {
           onStatusChange={handleUpdateStatus}
         />
       )}
+    </div>
+  );
+};
+
+const TaskCard = ({ task, column, onDragStart, onStatusChange, onClick, formatDueDate }) => {
+  return (
+    <div
+      draggable
+      onDragStart={(e) => onDragStart(e, task.id)}
+      onClick={onClick}
+      className="group bg-card border border-border hover:border-primary/50 hover:shadow-md rounded-xl p-4 shadow-2xs transition-all duration-150 cursor-pointer active:cursor-grabbing relative overflow-hidden"
+    >
+      <div className={`absolute top-0 left-0 bottom-0 w-1 ${column.dotColor}`} />
+
+      <div className="pl-1">
+        <h4 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+          {task.title}
+        </h4>
+
+        {task.description && (
+          <p className="text-xs text-muted-foreground mt-1.5 line-clamp-3">
+            {task.description}
+          </p>
+        )}
+
+        <div className="flex items-center justify-between gap-2 mt-3 pt-2.5 border-t border-border/50 text-[11px]">
+          {task.due_date ? (
+            <div className="inline-flex items-center gap-1 text-muted-foreground">
+              <Calendar className="w-3 h-3" />
+              <span>{formatDueDate(task.due_date)}</span>
+            </div>
+          ) : (
+            <span className="text-muted-foreground/60">No due date</span>
+          )}
+
+          <div className="flex items-center gap-1">
+            {column.id !== 'todo' && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onStatusChange(task.id, 'todo');
+                }}
+                className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-input/40 hover:bg-input text-muted-foreground hover:text-foreground transition cursor-pointer"
+                title="Move to To Do"
+              >
+                To Do
+              </button>
+            )}
+            {column.id !== 'in_progress' && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onStatusChange(task.id, 'in_progress');
+                }}
+                className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-input/40 hover:bg-input text-chart-4 transition cursor-pointer"
+                title="Move to In Progress"
+              >
+                Progress
+              </button>
+            )}
+            {column.id !== 'done' && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onStatusChange(task.id, 'done');
+                }}
+                className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-chart-3/15 hover:bg-chart-3/25 text-chart-3 transition cursor-pointer"
+                title="Mark as Done"
+              >
+                Done
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
