@@ -264,18 +264,31 @@ const Dashboard = () => {
 
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center group-hover:bg-gradient-to-tr group-hover:from-primary group-hover:to-accent group-hover:text-primary-foreground transition-all duration-300">
-                      <FolderKanban className="w-5 h-5" />
+                    <div className="flex items-center gap-2">
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center group-hover:bg-gradient-to-tr group-hover:from-primary group-hover:to-accent group-hover:text-primary-foreground transition-all duration-300">
+                        <FolderKanban className="w-5 h-5" />
+                      </div>
+                      {project.owner_id === user?.id ? (
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20">
+                          Owner
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-muted text-muted-foreground border border-border">
+                          Member
+                        </span>
+                      )}
                     </div>
 
-                    <button
-                      onClick={(e) => openInviteModal(e, project)}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground bg-input/40 hover:bg-input border border-border transition cursor-pointer"
-                      title="Invite team member"
-                    >
-                      <UserPlus className="w-3.5 h-3.5" />
-                      <span>Invite</span>
-                    </button>
+                    {project.owner_id === user?.id && (
+                      <button
+                        onClick={(e) => openInviteModal(e, project)}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground bg-input/40 hover:bg-input border border-border transition cursor-pointer"
+                        title="Invite team member"
+                      >
+                        <UserPlus className="w-3.5 h-3.5" />
+                        <span>Invite</span>
+                      </button>
+                    )}
                   </div>
 
                   <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors line-clamp-1">

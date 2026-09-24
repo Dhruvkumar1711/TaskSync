@@ -99,6 +99,30 @@ const TaskDetailModal = ({ task, onClose, onStatusChange }) => {
     });
   };
 
+  const getDueMeta = (dateStr, status) => {
+    if (!dateStr || status === 'done') return null;
+    const target = new Date(dateStr);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    target.setHours(0, 0, 0, 0);
+
+    const diffDays = Math.round((target - today) / (1000 * 60 * 60 * 24));
+    if (diffDays < 0) {
+      return {
+        label: 'Overdue',
+        badgeClass: 'text-destructive font-semibold bg-destructive/10 border-destructive/25',
+      };
+    }
+    if (diffDays === 0) {
+      return {
+        label: 'Due today',
+        badgeClass: 'text-chart-4 font-semibold bg-chart-4/15 border-chart-4/30',
+      };
+    }
+    return null;
+  };
+
+  const dueMeta = getDueMeta(task.due_date, currentStatus);
   const activeConfig = STATUS_CONFIG[currentStatus] || STATUS_CONFIG.todo;
   const ActiveIcon = activeConfig.icon;
 
@@ -214,9 +238,16 @@ const TaskDetailModal = ({ task, onClose, onStatusChange }) => {
                 <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                   Due Date
                 </span>
-                <span className="text-xs font-medium text-foreground truncate mt-0.5">
-                  {formatDate(task.due_date)}
-                </span>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-xs font-medium text-foreground truncate">
+                    {formatDate(task.due_date)}
+                  </span>
+                  {dueMeta && (
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded border ${dueMeta.badgeClass}`}>
+                      {dueMeta.label}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
